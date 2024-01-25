@@ -1,0 +1,26 @@
+# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+imply_option("MOZ_PLACES", True)
+imply_option("MOZ_SERVICES_HEALTHREPORT", False)
+imply_option("MOZ_SERVICES_SYNC", False)
+imply_option("MOZ_DEDICATED_PROFILES", False)
+imply_option("MOZ_BLOCK_PROFILE_DOWNGRADE", False)
+imply_option("MOZ_NORMANDY", False)
+imply_option("MOZ_REQUIRE_SIGNING", False)
+
+with only_when(target_has_linux_kernel & compile_environment):
+    option(env="MOZ_NO_PIE_COMPAT", help="Enable non-PIE wrapper")
+
+    set_config("MOZ_NO_PIE_COMPAT", depends_if("MOZ_NO_PIE_COMPAT")(lambda _: True))
+
+set_config("BINOC_TESTAPP", True)
+set_define("BINOC_TESTAPP", True)
+add_old_configure_assignment("BINOC_TESTAPP", True)
+
+imply_option("MOZ_APP_BASENAME", "TestApp")
+
+include("../toolkit/moz.configure")

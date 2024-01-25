@@ -1,0 +1,78 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+dist_dest   = $(DIST)/$(MOZ_MACBUNDLE_NAME)
+
+AB_CD = $(MOZ_UI_LOCALE)
+
+GRE_MILESTONE = $(shell $(PYTHON3) $(topsrcdir)/config/printconfigsetting.py $(DIST)/bin/platform.ini Build Milestone)
+MOZ_BUILDID = $(shell $(PYTHON3) $(topsrcdir)/config/printconfigsetting.py $(DIST)/bin/platform.ini Build BuildID)
+
+# Build a binary bootstrapping with XRE_main
+
+ifndef MOZ_WINCONSOLE
+ifdef MOZ_DEBUG
+MOZ_WINCONSOLE = 1
+else
+MOZ_WINCONSOLE = 0
+endif
+endif
+
+include $(topsrcdir)/config/config.mk
+
+# If we are trying to show an error dialog about the lack of SSE2 support,
+# make sure that code itself doesn't use SSE2.
+ifdef MOZ_LINUX_32_SSE2_STARTUP_ERROR
+CXX := $(filter-out -march=% -msse -msse2 -mfpmath=sse,$(CXX))
+CXX += -march=pentiumpro
+endif
+
+include $(topsrcdir)/config/rules.mk
+
+ifneq ($(OS_ARCH),WINNT)
+ifdef COMPILE_ENVIRONMENT
+ifndef MOZ_NO_PIE_COMPAT
+libs::
+	cp -p $(DIST)/bin/$(MOZ_APP_NAME)$(BIN_SUFFIX) $(DIST)/bin/$(MOZ_APP_NAME)-bin$(BIN_SUFFIX)
+endif
+endif
+
+GARBAGE += $(addprefix $(DIST)/bin/defaults/pref/, all.js all-thunderbird.js mailnews.js)
+endif # ! WinNT
+
+ifeq (gtk,$(MOZ_WIDGET_TOOLKIT))
+ICON_SUFFIX=.png
+DESKTOP_ICONS = \
+	$(NULL)
+
+DESKTOP_ICON_FILES = $(addsuffix $(ICON_SUFFIX), $(DESKTOP_ICONS))
+
+# libs:: $(addprefix $(srcdir)/icons/$(MOZ_WIDGET_TOOLKIT)/,$(DESKTOP_ICON_FILES))
+# 	$(INSTALL) $(IFLAGS1) $^ $(DIST)/bin/chrome/icons/default
+endif
+
+ifneq (,$(filter windows,$(MOZ_WIDGET_TOOLKIT)))
+ICON_SUFFIX=.ico
+
+DESKTOP_ICONS = \
+	$(NULL)
+
+BRANDED_ICONS = \
+	$(NULL)
+
+DESKTOP_ICON_FILES = $(addsuffix $(ICON_SUFFIX), $(DESKTOP_ICONS))
+BRANDED_ICON_FILES = $(addsuffix $(ICON_SUFFIX), $(BRANDED_ICONS))
+
+# libs:: $(addprefix $(srcdir)/icons/$(MOZ_WIDGET_TOOLKIT)/,$(DESKTOP_ICON_FILES))
+# 	$(INSTALL) $(IFLAGS1) $^ $(DIST)/bin/chrome/icons/default
+
+# libs:: $(addprefix $(topsrcdir)/$(MOZ_BRANDING_DIRECTORY)/, $(BRANDED_ICON_FILES))
+# 	$(INSTALL) $(IFLAGS1) $^ $(DIST)/bin/chrome/icons/default
+endif
+
+# channel-prefs.js is handled separate from other prefs due to bug 756325
+# libs:: $(srcdir)/profile/channel-prefs.js
+# 	$(NSINSTALL) -D $(DIST)/bin/defaults/pref
+# 	$(call py_action,preprocessor channel-prefs.js,-Fsubstitution $(PREF_PPFLAGS) $(ACDEFINES) $^ -o $(DIST)/bin/defaults/pref/channel-prefs.js)
+
