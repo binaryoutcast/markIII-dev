@@ -981,6 +981,15 @@ class MachCommandConditions(object):
         return False
 
     @staticmethod
+    def is_unsupported_comm_app(cls):
+        """Must have an unsupported comm app build."""
+        if hasattr(cls, "substs"):
+            build_app = cls.substs.get("MOZ_BUILD_APP")
+            if build_app.startswith("comm/") and not is_thunderbird(cls):
+                return True
+        return False
+
+    @staticmethod
     def is_firefox_or_thunderbird(cls):
         """Must have a Firefox or Thunderbird build."""
         return MachCommandConditions.is_firefox(
@@ -1013,7 +1022,9 @@ class MachCommandConditions(object):
         """Must have a build."""
         return MachCommandConditions.is_firefox_or_android(
             cls
-        ) or MachCommandConditions.is_thunderbird(cls)
+        ) or MachCommandConditions.is_thunderbird(
+            cls
+        ) or MachCommandConditions.is_unsupported_comm_app(cls)
 
     @staticmethod
     def has_build_or_shell(cls):
