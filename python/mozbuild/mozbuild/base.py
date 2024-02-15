@@ -985,7 +985,7 @@ class MachCommandConditions(object):
         """Must have an unsupported comm app build."""
         if hasattr(cls, "substs"):
             build_app = cls.substs.get("MOZ_BUILD_APP")
-            if build_app.startswith("comm/") and not is_thunderbird(cls):
+            if build_app.startswith("comm/") and not MachCommandConditions.is_thunderbird(cls):
                 return True
         return False
 
